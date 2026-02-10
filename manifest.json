@@ -1,0 +1,9 @@
+{
+"name":"Controle de Carnes - Boris Burger",
+"short_name":"Carnes Boris",
+"start_url":"index.html",
+"display":"standalone",
+"background_color":"#111",
+"theme_color":"#111",
+"icons":[{"src":"boris.png","sizes":"512x512","type":"image/png"}]
+}

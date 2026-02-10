@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Controle de Carnes - Boris Burger</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<style>
+body{font-family:Arial;background:#111;color:#fff;text-align:center;padding:20px}
+button{font-size:22px;padding:20px;margin:10px;width:90%}
+.counter{display:flex;justify-content:center;align-items:center}
+.counter button{width:80px;height:80px;font-size:40px}
+.counter span{width:80px;font-size:40px}
+.hidden{display:none}
+
+@keyframes piscar{0%{background:#111}50%{background:#8b0000}100%{background:#111}}
+.alerta{animation:piscar 0.8s infinite}
+
+#boris{position:fixed;bottom:-200px;right:20px;width:180px}
+.boris-pula{animation:pulo 1.2s}
+@keyframes pulo{0%{transform:translateY(0)}30%{transform:translateY(-180px)}60%{transform:translateY(0)}100%{transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<h1>🍔 Controle de Carnes</h1>
+
+<div id="roleSelect">
+<button onclick="setRole('atendente')">Sou ATENDENTE</button>
+<button onclick="setRole('chapeiro')">Sou CHAPEIRO</button>
+</div>
+
+<div id="atendente" class="hidden">
+<div class="counter">Pequena <button onclick="add('p',-1)">-</button><span id="p">0</span><button onclick="add('p',1)">+</button></div>
+<div class="counter">Grande <button onclick="add('g',-1)">-</button><span id="g">0</span><button onclick="add('g',1)">+</button></div>
+<div class="counter">Borizão <button onclick="add('b',-1)">-</button><span id="b">0</span><button onclick="add('b',1)">+</button></div>
+<div class="counter">Porco <button onclick="add('o',-1)">-</button><span id="o">0</span><button onclick="add('o',1)">+</button></div>
+<button onclick="enviarPedido()">ENVIAR</button>
+<h3>Relatório do dia</h3>
+<div id="relatorio"></div>
+<button onclick="zerarDia()">Zerar dia</button>
+</div>
+
+<div id="chapeiro" class="hidden">
+<h2>Pedido recebido</h2>
+<div id="pedido"></div>
+<button onclick="aceitar()">ACEITAR</button>
+<button onclick="recusar()">RECUSAR</button>
+<audio id="beep" loop>
+<source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg">
+</audio>
+</div>
+
+<img src="boris.png" id="boris">
+
+<script>
+let role="",pedidoAtual=null;
+let total={p:0,g:0,b:0,o:0};
+const channel=new BroadcastChannel("boris");
+
+function setRole(r){role=r;roleSelect.classList.add("hidden");document.getElementById(r).classList.remove("hidden");}
+function add(t,v){let e=document.getElementById(t);e.innerText=Math.max(0,+e.innerText+v);}
+function enviarPedido(){pedidoAtual={p:+p.innerText,g:+g.innerText,b:+b.innerText,o:+o.innerText};channel.postMessage({t:"pedido",d:pedidoAtual});p.innerText=g.innerText=b.innerText=o.innerText=0;}
+channel.onmessage=e=>{
+if(role==="chapeiro"&&e.data.t==="pedido"){pedidoAtual=e.data.d;pedido.innerHTML=`P:${pedidoAtual.p} G:${pedidoAtual.g} B:${pedidoAtual.b} O:${pedidoAtual.o}`;document.body.classList.add("alerta");beep.play();}
+if(role==="atendente"&&e.data.t==="ok"){Object.keys(total).forEach(k=>total[k]+=e.data.d[k]);relatorio.innerHTML=JSON.stringify(total);}
+}
+function aceitar(){channel.postMessage({t:"ok",d:pedidoAtual});boris.classList.add("boris-pula");setTimeout(()=>boris.classList.remove("boris-pula"),1200);limpar();}
+function recusar(){limpar();}
+function limpar(){document.body.classList.remove("alerta");beep.pause();beep.currentTime=0;pedido.innerHTML="";}
+function zerarDia(){total={p:0,g:0,b:0,o:0};relatorio.innerHTML="Zerado";}
+
+if('serviceWorker'in navigator){navigator.serviceWorker.register('sw.js');}
+</script>
+
+</body>
+</html>
